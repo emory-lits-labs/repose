@@ -1,0 +1,70 @@
+{% extends "eultheme/site_base.html" %}
+{% load static widget_tweaks %}
+
+{% block metadata %}
+  <meta property="og:site_name" content="Readux"/>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{request.build_absolute_uri}}"/>
+
+  <meta name="twitter:domain" content="{{request.get_host}}" />
+{% endblock %}
+
+{% block favicon %}
+    {% if ENABLE_BETA_WARNING %}
+      <link id="siteFavIcon" rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon-beta.ico' %}" />
+    {% elif debug %}
+        <link id="siteFavIcon" rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon-dev.ico' %}" />
+    {% else %}
+      <link id="siteFavIcon" rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}" />
+    {% endif %}
+  {% endblock %}
+
+{% block css %}
+  {{ block.super }}
+  <link href='//fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css' />
+  <link rel="stylesheet" type="text/css" href="{% static 'css/readux.css' %}" />
+{% endblock %}
+
+{% block javascript %}
+    <script type="text/javascript" src="{% static 'ext/isotope.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/local.js' %}"></script>
+{% endblock %}
+
+{% block head_extras %}
+   <meta name="google-site-verification" content="WWdn3okWneQob5r6S1Svxtf87zwE1FHre0bRMvUzPvQ" />
+{% endblock %}
+
+{% block xs-nav-title %}
+  {# <img src="{% static 'img/readux-inverse.png' %}"/> #}
+  <span>Repose</span>
+{% endblock %}
+
+{% block nav-title %}
+  <div class="logo">
+    {# <img src="{% static 'img/readux.png' %}"/> #}
+    <span class="site-title">repose</span>
+  </div>
+{% endblock %}
+
+{# The <title> for the page  #}
+{% block page-title %}{% block page-subtitle %}{% endblock %}repose{% endblock %}
+
+{% block nav_class %}navbar-inverse navbar-fixed-top{% endblock %}
+
+{% block navlinks %}
+
+{% endblock %}
+
+{% block admin-navlink %} {# override eultheme default #}{% endblock %}
+
+
+{% block navbar-extra %}
+  {# {% include 'snippets/login.html' %} #}
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block footer-content %}
+{% endblock %}

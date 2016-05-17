@@ -29,12 +29,18 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'django.contrib.sites',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'eulfedora',
+    'django.contrib.humanize',
+    'eultheme',
+    'widget_tweaks',
+    'downtime',
+    'repose.repo',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -53,7 +59,9 @@ ROOT_URLCONF = 'repose.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,6 +69,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # NOTE: disabled because of error on get_current_site
+                #'eultheme.context_processors.template_settings',
+                'repose.context_extras',
             ],
         },
     },
@@ -106,6 +117,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+SITE_ID = 1
 
 EUL_INDEXER_CONTENT_MODELS = [['info:fedora/fedora-system:FedoraObject-3.0']]
 

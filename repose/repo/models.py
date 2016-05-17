@@ -52,6 +52,7 @@ class GenericObject(DigitalObject):
                # TODO: other etd rels here too: supplement / author info?
 
         # index any collection membership through other objects
+        # TODO: simplify this and just use collection
         data['isMemberOfCollection'] = self.get_collections(data)
 
         return data

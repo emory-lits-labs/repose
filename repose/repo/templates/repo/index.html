@@ -1,0 +1,68 @@
+{% extends "site_base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container">
+<h2>repository contents</h2>
+
+<p>{{ total|intcomma }} objects indexed from {{ fedora }}</p>
+
+<h3>Size Statistics</h3>
+<table class="table table-striped">
+<tr><th>size</th><th>max</th><th>min</th><th>mean</th><th>total</th></tr>
+{% for size, data in stats.iteritems %}
+<tr>
+    <th>{{ size|cut:"_size" }}</th>
+    <td>{{ data.max|filesizeformat }}</td>
+    <td>{{ data.min|filesizeformat }}</td>
+    <td>{{ data.mean|filesizeformat }}</td>
+    <td>{{ data.sum|filesizeformat }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<div class="row">
+
+<div class="col-md-6">
+
+<h3>Totals by content model</h3>
+<table class="table table-striped">
+<tr><th>total</th><th>content model</th></tr>
+{% for val, count in facets.content_model %}
+<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+{% endfor %}
+</table>
+
+<h3>Totals by mimetype</h3>
+<table class="table table-striped">
+<tr><th>total</th><th>mimetype</th></tr>
+{% for val, count in facets.mimetype %}
+<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+{% endfor %}
+</table>
+
+</div>
+<div class="col-md-6">
+
+<table><h3>Totals by collection</h3>
+<table class="table table-striped">
+<tr><th>total</th><th>collection</th></tr>
+{% for val, count in facets.isMemberOfCollection %}
+<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+{% endfor %}
+</table>
+
+<h3>Totals by state</h3>
+<table class="table table-striped">
+<tr><th>total</th><th>state</th></tr>
+{% for val, count in facets.state %}
+<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+{% endfor %}
+</table>
+
+</div>
+
+
+</div>
+</div>
+{% endblock %}

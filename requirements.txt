@@ -1,3 +1,4 @@
 django>=1.9
 eulfedora
 -e git+https://github.com/emory-libraries/django-eultheme.git#egg=eultheme
+-e git+https://github.com/emory-lits-labs/scorched.git@feature/stats#egg=scorched

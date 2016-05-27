@@ -6,10 +6,11 @@
 <h2>repository contents</h2>
 
 <p>{{ total|intcomma }} objects indexed from {{ fedora }}</p>
+<p>{{ stats.object_size.sum|filesizeformat }} total storage</p>
 
 <h3>Size Statistics</h3>
 <table class="table table-striped">
-<tr><th>size</th><th>max</th><th>min</th><th>mean</th><th>total</th></tr>
+<tr><th></th><th>max</th><th>min</th><th>mean</th><th>total</th></tr>
 {% for size, data in stats.iteritems %}
 <tr>
     <th>{{ size|cut:"_size" }}</th>
@@ -33,13 +34,21 @@
 {% endfor %}
 </table>
 
-<h3>Totals by mimetype</h3>
+{# stats facets includes value and count; easier to display just via stats #}
+{# than to try to combine facets results with stats query #}
+{% with stats.binary_size.facets.mimetype as mimetype_stats %}
+<h3>Totals by mimetype</h3>  {# primary content mimetype #}
 <table class="table table-striped">
-<tr><th>total</th><th>mimetype</th></tr>
-{% for val, count in facets.mimetype %}
-<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+<tr><th>total</th><th>mimetype</th><th>binary size</th></tr>
+{% for mimetype, stats in mimetype_stats.iteritems %}
+    <tr>
+        <td>{{ stats.count|intcomma }}</td>
+        <td>{{ mimetype }}</td>
+        <td>{{ stats.sum|filesizeformat }}</td>
+    </tr>
 {% endfor %}
 </table>
+{% endwith %}
 
 </div>
 <div class="col-md-6">
@@ -52,13 +61,23 @@
 {% endfor %}
 </table>
 
-<h3>Totals by state</h3>
+{% with stats.object_size.facets.state as status_stats %}
+<h3>Totals by status</h3>
 <table class="table table-striped">
-<tr><th>total</th><th>state</th></tr>
-{% for val, count in facets.state %}
-<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+<tr><th>total</th><th>status</th><th>object size</th></tr>
+{# convert fedora codes to labels for readability #}
+{% for status, stats in status_stats.iteritems %}
+    <tr>
+        <td>{{ stats.count|intcomma }}</td>
+        <td>{% if status = 'A' %}Active
+            {% elif status = 'I' %}Inactive
+            {% elif status = 'D' %}Deleted
+            {% else %}{{ status }}{% endif %}</td>
+        <td>{{ stats.sum|filesizeformat }}</td>
+    </tr>
 {% endfor %}
 </table>
+{% endwith %}
 
 </div>
 

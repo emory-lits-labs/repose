@@ -27,8 +27,7 @@ def site_index(request):
 
     solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
     facet_query = solr.query().facet_by(fields=[
-        "content_model", "isMemberOfCollection",
-        "mimetype", "state"]).paginate(rows=0)
+        "content_model", "isMemberOfCollection"]).paginate(rows=0)
 
     result = facet_query.execute()
     facets = result.facet_counts.facet_fields
@@ -53,8 +52,17 @@ def site_index(request):
 
     # get stats on various sizes
     stats_query = solr.query().stats(['object_size', 'xml_size', 'binary_size',
-                                      'master_size', 'access_size']) \
+                                      'master_size', 'access_size'],
+                                     facet=['mimetype', 'state']) \
                               .paginate(rows=0).execute()
+
+    # stats + facet pivots = requires solr 5?
+    # stats_query = solr.query().stats(['{!tag=piv1 min=true max=true sum=true}object_size']) \
+    #                           .pivot_by('{!stats=piv1}content_model,isMemberOfCollection') \
+    #                           .paginate(rows=0).execute()
+
+    # if supported, stats should be included under here somewhere
+    # print stats_query.facet_counts.facet_pivot
 
     return render(request, 'repo/index.html', context={
         'total': result.result.numFound,

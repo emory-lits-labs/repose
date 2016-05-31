@@ -5,46 +5,73 @@
 <div class="container">
 <h2>repository contents</h2>
 
-<p>{{ total|intcomma }} objects indexed from {{ fedora }}</p>
-<p>{{ stats.object_size.sum|filesizeformat }} total storage</p>
+<p><b>{{ total|intcomma }}</b> objects indexed from {{ fedora }}</p>
+<p><b>{{ stats.object_size.sum|filesizeformat }}</b> total storage</p>
 
 <h3>Size Statistics</h3>
-<table class="table table-striped">
-<tr><th></th><th>max</th><th>min</th><th>mean</th><th>total</th></tr>
+<table class="table table-striped sortable">
+<thead>
+    <tr>
+        <th data-orderable="false"></th>
+        <th>max</th>
+        <th>min</th>
+        <th>mean</th>
+        <th>total</th>
+    </tr>
+</thead>
+<tbody>
 {% for size, data in stats.iteritems %}
-<tr>
-    <th>{{ size|cut:"_size" }}</th>
-    <td>{{ data.max|filesizeformat }}</td>
-    <td>{{ data.min|filesizeformat }}</td>
-    <td>{{ data.mean|filesizeformat }}</td>
-    <td>{{ data.sum|filesizeformat }}</td>
-</tr>
+    <tr>
+        <th>{{ size|cut:"_size" }}</th>
+        <td data-order="{{ data.max }}">{{ data.max|filesizeformat }}</td>
+        <td data-order="{{ data.min }}">{{ data.min|filesizeformat }}</td>
+        <td data-order="{{ data.mean }}">{{ data.mean|filesizeformat }}</td>
+        <td data-order="{{ data.sum }}">{{ data.sum|filesizeformat }}</td>
+    </tr>
 {% endfor %}
+</tbody>
 </table>
+
+{% if data.binary_size.min < 1 %}
+<p><a href="{% url 'negative-size' %}">View all objects with binary datastream size 0 or less</a></p>
+{% endif %}
 
 <div class="row">
 
 <div class="col-md-6">
 
 <h3>Totals by content model</h3>
-<table class="table table-striped">
-<tr><th>total</th><th>content model</th></tr>
+<table class="table table-striped sortable">
+<thead>
+    <tr><th>total</th><th>content model</th></tr>
+</thead>
+<tbody>
 {% for val, count in facets.content_model %}
-<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+    <tr>
+        <td data-order="{{ count }}">{{ count|intcomma }}</td>
+        <td>{{ val }}</td>
+    </tr>
 {% endfor %}
+</tbody>
 </table>
 
 {# stats facets includes value and count; easier to display just via stats #}
 {# than to try to combine facets results with stats query #}
 {% with stats.binary_size.facets.mimetype as mimetype_stats %}
 <h3>Totals by mimetype</h3>  {# primary content mimetype #}
-<table class="table table-striped">
-<tr><th>total</th><th>mimetype</th><th>binary size</th></tr>
+<table class="table table-striped sortable">
+<thead>
+    <tr>
+        <th>total</th>
+        <th>mimetype</th>
+        <th>binary size</th>
+    </tr>
+</thead>
 {% for mimetype, stats in mimetype_stats.iteritems %}
     <tr>
-        <td>{{ stats.count|intcomma }}</td>
+        <td data-order="{{ stats.count }}">{{ stats.count|intcomma }}</td>
         <td>{{ mimetype }}</td>
-        <td>{{ stats.sum|filesizeformat }}</td>
+        <td data-order="{{ stats.sum }}">{{ stats.sum|filesizeformat }}</td>
     </tr>
 {% endfor %}
 </table>
@@ -54,28 +81,39 @@
 <div class="col-md-6">
 
 <table><h3>Totals by collection</h3>
-<table class="table table-striped">
-<tr><th>total</th><th>collection</th></tr>
+<table class="table table-striped sortable">
+<thead>
+    <tr><th>total</th><th>collection</th></tr>
+</thead>
+<tbody>
 {% for val, count in facets.isMemberOfCollection %}
-<tr><td>{{ count|intcomma }}</td><td>{{ val }}</td></tr>
+    <tr>
+        <td data-order="{{ count }}">{{ count|intcomma }}</td>
+        <td>{{ val }}</td>
+    </tr>
 {% endfor %}
+</tbody>
 </table>
 
 {% with stats.object_size.facets.state as status_stats %}
 <h3>Totals by status</h3>
-<table class="table table-striped">
+<table class="table table-striped sortable">
+<thead>
 <tr><th>total</th><th>status</th><th>object size</th></tr>
+</thead>
+<tbody>
 {# convert fedora codes to labels for readability #}
 {% for status, stats in status_stats.iteritems %}
     <tr>
-        <td>{{ stats.count|intcomma }}</td>
+        <td data-order="{{ stats.count }}">{{ stats.count|intcomma }}</td>
         <td>{% if status = 'A' %}Active
             {% elif status = 'I' %}Inactive
             {% elif status = 'D' %}Deleted
             {% else %}{{ status }}{% endif %}</td>
-        <td>{{ stats.sum|filesizeformat }}</td>
+        <td data-order="{{ stats.sum }}">{{ stats.sum|filesizeformat }}</td>
     </tr>
 {% endfor %}
+</tbody>
 </table>
 {% endwith %}
 

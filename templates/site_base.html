@@ -21,13 +21,14 @@
 
 {% block css %}
   {{ block.super }}
-  <link href='//fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css' />
-  <link rel="stylesheet" type="text/css" href="{% static 'css/readux.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/dataTables.bootstrap.min.css' %}" />
 {% endblock %}
 
 {% block javascript %}
-    <script type="text/javascript" src="{% static 'ext/isotope.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/local.js' %}"></script>
+  {# newer version of jquery needed for datatables #}
+  <script src="https://code.jquery.com/jquery-1.12.3.min.js"></script>
+  {# jquery datatables #}
+  <script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
 {% block head_extras %}
@@ -67,4 +68,13 @@
 {% endblock %}
 
 {% block footer-content %}
+<script>
+$(document).ready(function() {
+    $('.sortable').DataTable({
+      paging: false,
+      searching: false,
+      info: false,
+    });
+});
+</script>
 {% endblock %}

@@ -1,5 +1,7 @@
 from django.conf import settings
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.template.defaultfilters import filesizeformat
 from eulfedora.server import Repository
 from eulfedora.indexdata.views import index_data
 import scorched
@@ -94,3 +96,37 @@ def negative_size(request):
         'total': response.result.numFound,
         'results': response.result.docs
     })
+
+
+def size_range_json(request):
+    solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
+    # use stats query to determine max size
+    stats_query = solr.query().stats('master_size') \
+                              .paginate(rows=0).execute()
+    max_binary_size = int(stats_query.stats.stats_fields['master_size']['max'])
+
+    size_query = response = solr.query() \
+                   .facet_range(fields='master_size', start=0,
+                                gap=1024*1024*1024,  # gb
+                                end=max_binary_size) \
+                   .paginate(rows=0)
+
+    data = {'series': []}
+    for label, cmodel in GenericObject.cmodels.iteritems():
+        response = size_query.filter(content_model=cmodel).execute()
+        counts = response.facet_counts.facet_ranges['master_size']['counts']
+        # all have the same ranges, so generate categories from whichever is first
+        if 'categories' not in data:
+            data['categories'] = ['> %s' % filesizeformat(size) for size, count
+                                  in counts]
+
+        data['series'].append({
+            'name': label,
+            'data': [count for size, count in counts]
+        })
+
+    return JsonResponse(data)
+
+
+def size_range(request):
+    return render(request, 'repo/size_chart.html')

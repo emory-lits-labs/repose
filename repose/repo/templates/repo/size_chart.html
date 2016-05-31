@@ -1,0 +1,46 @@
+{% extends "site_base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container">
+<h2>Sizes</h2>
+
+{{ sizes }}
+
+
+<div id="container" style="width:100%; height:400px;"></div>
+
+</div>
+
+<script>
+$(function() {
+    var options = {
+         credits: {
+            enabled: false
+        },
+        chart: {
+            type: 'column',
+            renderTo: 'container'
+        },
+        title: {
+            text: 'Content by type size of master datastream'
+        },
+        xAxis: {
+            categories: []
+        },
+        yAxis: {
+            title: {
+                text: 'Number of objects'
+            }
+        },
+        series: [{}]
+    };
+
+    $.getJSON("{% url 'size-range-json' %}",  function(data) {
+        options.series = data.series;
+        options.xAxis.categories = data.categories;
+        var chart = new Highcharts.Chart(options);
+    });
+});
+</script>
+{% endblock %}

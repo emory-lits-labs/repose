@@ -75,6 +75,7 @@ class GenericObject(DigitalObject):
         # NOTE: default data relations uses'isMemberOfCollection'
         # storing as collection to simplify solr searching
         data['collection'] = self.get_collections(data)
+        del data['isMemberOfCollection']
 
         return data
 

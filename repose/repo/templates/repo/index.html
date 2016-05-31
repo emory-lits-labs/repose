@@ -88,7 +88,7 @@
     <tr><th>total</th><th>collection</th></tr>
 </thead>
 <tbody>
-{% for val, count in facets.isMemberOfCollection %}
+{% for val, count in facets.collection %}
     <tr>
         <td data-order="{{ count }}">{{ count|intcomma }}</td>
         <td>{{ val }}</td>

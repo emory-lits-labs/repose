@@ -28,7 +28,7 @@ def site_index(request):
 
     solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
     facet_query = solr.query().facet_by(fields=[
-        "content_model", "isMemberOfCollection"]).paginate(rows=0)
+        "content_model", "collection"]).paginate(rows=0)
 
     result = facet_query.execute()
     facets = result.facet_counts.facet_fields
@@ -37,15 +37,15 @@ def site_index(request):
     response = solr.query(
         solr.Q(content_model='info:fedora/emory-control:Collection-1.0') |
         solr.Q(content_model='info:fedora/emory-control:Collection-1.1'),
-            isMemberOfCollection__any=True) \
-       .field_limit(['pid', 'isMemberOfCollection']) \
+        collection__any=True) \
+       .field_limit(['pid', 'collection']) \
        .sort_by('pid') \
        .cursor(rows=100)
 
     collections = {}
     for doc in response:
         # print doc
-        collections[doc['pid']] = doc['isMemberOfCollection'][0]
+        collections[doc['pid']] = doc['collection'][0]
 
     # TODO: combine collection hierarchy with collection facet data
     # maybe use to build something to use with django regroup?

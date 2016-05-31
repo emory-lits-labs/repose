@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 from eulfedora.models import DigitalObject, Relation
 from eulfedora.rdfns import relsext
-from eulfedora.syncutil import estimate_object_size
 
 
 class GenericObject(DigitalObject):
@@ -16,19 +15,39 @@ class GenericObject(DigitalObject):
         data = OrderedDict(super(GenericObject, self).index_data())
         binary_size = 0
         xml_size = 0
+        # preliminary object size, based on size of the foxml
+        response = self.api.getObjectXML(self.pid)
+        try:
+            # use content-length header if present
+            object_size = int(response.headers['Content-Length'])
+        except KeyError:
+            # otherwise, get the size from actual content
+            object_size = len(response.content)
+        # number of binary datastream versions on this object
+        binary_count = 0
+
         for ds in self.ds_list:
             dsobj = self.getDatastreamObject(ds)
             for version in dsobj.history().versions:
+                # FIXME: should external datastreams be included here?
                 if dsobj.mimetype in ['text/xml', 'application/xml',
                                       'application/rdf+xml']:
                     xml_size += version.size
                 else:
                     binary_size += version.size
+                    # only include managed datastreams in binary count
+                    if version.control_group == 'M':
+                        binary_count += 1
+
+                # if datastream is versioned, count it towards object size
+                if version.control_group == 'M':
+                    object_size += version.size
 
         data.update({
             # estimated size for entire object
-            'object_size': estimate_object_size(self),
+            'object_size': object_size,
             'binary_size': binary_size,
+            'binary_count': binary_count,
             'xml_size': xml_size,
         })
         data.update(self.master_access_info())
@@ -53,7 +72,9 @@ class GenericObject(DigitalObject):
 
         # index any collection membership through other objects
         # TODO: simplify this and just use collection
-        data['isMemberOfCollection'] = self.get_collections(data)
+        # NOTE: default data relations uses'isMemberOfCollection'
+        # storing as collection to simplify solr searching
+        data['collection'] = self.get_collections(data)
 
         return data
 

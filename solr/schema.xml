@@ -260,6 +260,7 @@ Solr Schema for projects using eulfedora and indexdata.
 
    <!-- standard fedora fields that should apply to all objects -->
    <field name="content_model" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="collection" type="string" indexed="true" stored="true" multiValued="true"/>
      <!-- treat dates as string or date ? -->
    <field name="label" type="string" indexed="true" stored="false"/>
    <field name="created" type="date" indexed="true" stored="true"/>
@@ -323,10 +324,11 @@ Solr Schema for projects using eulfedora and indexdata.
    <!-- object sizes and primary mimetype -->
    <field name="object_size" type="slong" indexed="true" stored="true"/>
    <field name="binary_size" type="slong" indexed="true" stored="true"/>
-   <field name="xml_size" type="sint" indexed="true" stored="true"/>
+   <field name="xml_size" type="slong" indexed="true" stored="true"/>
    <field name="master_size" type="slong" indexed="true" stored="true"/>
    <field name="access_size" type="slong" indexed="true" stored="true"/>
    <field name="mimetype" type="string" indexed="true" stored="true"/>
+   <field name="binary_count" type="sint" indexed="true" stored="true"/>
 
    <!-- Here, default is used to create a "timestamp" field indicating
         When each document was indexed.

@@ -17,11 +17,12 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from eulfedora.indexdata import urls as indexdata_urls
 from eulfedora.indexdata import views as indexdata_views
-from repose.repo.views import stats_index_data, site_index
+from repose.repo.views import stats_index_data, site_index, negative_size
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^indexdata/$', indexdata_views.index_config, name='index-config'),
     url(r'^indexdata/(?P<id>[^/]+)/$', stats_index_data, name='index-data'),
     url(r'^$', site_index, name='site-index'),
+    url(r'^ds-err/$', negative_size, name='negative-size'),
 ]

@@ -1,0 +1,26 @@
+{% extends "site_base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container">
+<h2>Datastreams with sizes indicative of an error</h2>
+
+<p><b>{{ total|intcomma }}</b> objects with datastream sizes of 0 or less and at least
+  one managed binary datastream</p>
+
+{% if total %}
+<table class="table table-striped">
+<tr><th>pid</th><th>binary size</th><th>master size</th><th>access size</th><th># binary datastreams</tr>
+{% for result in results %}
+<tr>
+    <th>{{ result.pid }}</th>
+    <td>{{ result.binary_size|filesizeformat }}</td>
+    <td>{{ result.master_size|filesizeformat }}</td>
+    <td>{{ result.access_size|filesizeformat }}</td>
+    <td>{{ result.binary_count|intcomma }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}

@@ -8,6 +8,8 @@
 <p><b>{{ total|intcomma }}</b> objects with datastream sizes of 0 or less and at least
   one managed binary datastream</p>
 
+<p><a href="{% url 'negative-size-pidlist' %}">Download list of pids</a></p>
+
 {% if total %}
 <table class="table table-striped">
 <tr><th>pid</th><th>binary size</th><th>master size</th><th>access size</th><th># binary datastreams</tr>

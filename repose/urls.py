@@ -26,6 +26,8 @@ urlpatterns = [
     url(r'^$', repo_views.site_index, name='site-index'),
     # todo: figure out how to organize views better
     url(r'^ds-err/$', repo_views.negative_size, name='negative-size'),
+    url(r'^ds-err/pids.txt$', repo_views.negative_size, {'mode': 'pid-list'},
+        name='negative-size-pidlist'),
     url(r'^charts/sizes/$', repo_views.size_range, name='size-range'),
     url(r'^charts/sizes.json$', repo_views.size_range_json, name='size-range-json'),
     # would it make sense to organize by types of chart?

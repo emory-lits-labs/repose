@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.template.defaultfilters import filesizeformat
 from eulfedora.server import Repository
@@ -77,7 +77,7 @@ def site_index(request):
         })
 
 
-def negative_size(request):
+def negative_size(request, mode='display'):
     # query solr to find any objects with negative or zero size datastream
     # so they can be fixed
     solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
@@ -86,17 +86,23 @@ def negative_size(request):
     # NOTE: wildcard doesn't return expected results;
     # using arbitrary large negative number as lower range end instead
     # response = solr.query(binary_size__range=(WildcardString('*'), 0)) \
-    response = solr.query(binary_size__range=(-10000, 0)) \
-                   .filter(binary_count__gt=0) \
-                   .field_limit(['pid', 'binary_size', 'master_size',
-                                 'access_size', 'binary_count']) \
-                   .sort_by('pid') \
-                   .paginate(rows=100).execute()
+    query = solr.query(binary_size__range=(-10000, 0)) \
+                .filter(binary_count__gt=0) \
+                .sort_by('pid')
 
-    return render(request, 'repo/ds_size_err.html', context={
-        'total': response.result.numFound,
-        'results': response.result.docs
-    })
+    if mode == 'display':
+        response = query.field_limit(['pid', 'binary_size', 'master_size',
+                                      'access_size', 'binary_count']) \
+                        .paginate(rows=100).execute()
+        return render(request, 'repo/ds_size_err.html', context={
+            'total': response.result.numFound,
+            'results': response.result.docs
+        })
+
+    if mode == 'pid-list':
+        response = query.field_limit('pid').cursor(rows=500)
+        pid_list = '\n'.join(doc['pid'] for doc in response)
+        return HttpResponse(pid_list, content_type='text/plain')
 
 
 def size_range_json(request):

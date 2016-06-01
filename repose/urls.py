@@ -28,4 +28,17 @@ urlpatterns = [
     url(r'^ds-err/$', repo_views.negative_size, name='negative-size'),
     url(r'^charts/sizes/$', repo_views.size_range, name='size-range'),
     url(r'^charts/sizes.json$', repo_views.size_range_json, name='size-range-json'),
+    # would it make sense to organize by types of chart?
+    url(r'^charts/treemap/collection/$', repo_views.treemap,
+        {'mode': 'collection'}, name='collection-treemap'),
+    url(r'^charts/treemap/collection.json$', repo_views.collection_treemap_json,
+        name='collection-treemap-json'),
+    url(r'^charts/treemap/mimetype/$', repo_views.treemap,
+        {'mode': 'mimetype'}, name='mimetype-treemap'),
+    url(r'^charts/treemap/mimetype.json$', repo_views.mimetype_treemap_json,
+        name='mimetype-treemap-json'),
+    url(r'^charts/treemap/mimetype-size/$', repo_views.treemap,
+        {'mode': 'mimetype-size'}, name='mimetype-size-treemap'),
+    url(r'^charts/treemap/mimetype-size.json$', repo_views.mimetype_size_treemap_json,
+        name='mimetype-size-treemap-json'),
 ]

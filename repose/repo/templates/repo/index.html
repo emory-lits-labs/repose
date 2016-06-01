@@ -9,6 +9,12 @@
 <p><b>{{ stats.binary_count.sum|floatformat:"0"|intcomma }}</b> binary datastream versions</p>
 {# not sure why solr stats is returning a float with .0, but convert to display as int #}
 <p><b>{{ stats.object_size.sum|filesizeformat }}</b> total storage</p>
+<p>Charts:
+    <a href="{% url 'size-range' %}">size range by type</a> |
+    <a href="{% url 'collection-treemap' %}"># of objects by collection</a> |
+    <a href="{% url 'mimetype-treemap' %}"># of objects by mimetype</a> |
+    <a href="{% url 'mimetype-size-treemap' %}">size of content by mimetype</a>
+</p>
 
 <h3>Size Statistics</h3>
 <table class="table table-striped sortable">

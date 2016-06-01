@@ -1,0 +1,57 @@
+{% extends "site_base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container">
+<h2>{{ title }}</h2>
+
+{{ sizes }}
+
+
+<div id="container" style="width:100%; height:400px;"></div>
+
+</div>
+
+<script>
+$(function() {
+    var options = {
+         credits: {
+            enabled: false
+        },
+        chart: {
+            renderTo: 'container',
+        },
+        title: {
+            text: '',
+        },
+        subtitle: {
+            text: 'Click to drill down',
+        },
+        series: [{
+            type: 'treemap',
+            allowDrillToNode: true,
+            dataLabels: {
+                enabled: true
+            },
+            // layoutAlgorithm: 'squarified',
+            data: []
+        }]
+    };
+
+    $.getJSON("{{  json_url }}",  function(data) {
+
+        var color_index = 0;
+        var colors = Highcharts.getOptions().colors;
+        for (var i = 0; i < data.data.length; i++) {
+            // set colors for top-level parents
+            if (! data.data[i].hasOwnProperty('parent')) {
+                data.data[i].color = colors[color_index];
+                color_index += 1;
+            }
+        }
+        options.series[0].data = data.data;
+        var chart = new Highcharts.Chart(options);
+    });
+});
+</script>
+{% endblock %}

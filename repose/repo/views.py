@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.defaultfilters import filesizeformat
@@ -130,3 +131,109 @@ def size_range_json(request):
 
 def size_range(request):
     return render(request, 'repo/size_chart.html')
+
+
+def collection_treemap_json(request):
+    # collection treemap, number of objects
+    solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
+    facet_query = solr.query().facet_by(fields=[
+        "collection"]).paginate(rows=0)
+
+    result = facet_query.execute()
+    facets = result.facet_counts.facet_fields
+
+    # get collection hierarchy for parent and label
+    response = solr.query(
+        solr.Q(content_model='info:fedora/emory-control:Collection-1.0') |
+        solr.Q(content_model='info:fedora/emory-control:Collection-1.1')) \
+       .field_limit(['pid', 'collection', 'label']) \
+       .sort_by('pid') \
+       .cursor(rows=500)
+
+    parents = {}
+    labels = {}
+    for doc in response:
+        labels[doc['pid']] = doc['label']
+        if 'collection' in doc:
+            parents[doc['pid']] = doc['collection'][0]
+
+    data = []
+    info_prefix = 'info:fedora/'
+    info_len = len(info_prefix)
+    for collection_pid, count in facets['collection']:
+        # strip of info:fedora/ prefix
+        short_pid = collection_pid[info_len:]
+        collection_data = {
+            'id': collection_pid,
+            'name': labels[short_pid],
+            'value': count
+        }
+        if short_pid in parents:
+            collection_data['parent'] = parents[short_pid]
+        data.append(collection_data)
+    return JsonResponse({'data': data})
+
+
+def mimetype_treemap_json(request):
+    solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
+    # mimetype by count of objects
+    result = solr.query().facet_by(fields=[
+        "mimetype"]).paginate(rows=0).execute()
+    facets = result.facet_counts.facet_fields
+
+    data = []
+    parents = set()
+    for mimetype, count in facets['mimetype']:
+        parent, subtype = mimetype.split('/')
+        parents.add(parent)
+        data.append({'id': 'mimetype', 'value': count, 'name': mimetype,
+                     'parent': parent})
+
+    for parent in parents:
+        data.append({'id': parent, 'name': parent})
+
+    return JsonResponse({'data': data})
+
+
+def mimetype_size_treemap_json(request):
+    solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
+    # get master datastream size, faceted on mimetype
+    stats_query = solr.query().stats('master_size', facet='mimetype') \
+                              .paginate(rows=0).execute()
+    mimetype_stats = stats_query.stats.stats_fields['master_size']['facets']['mimetype']
+# {% with stats.object_size.facets.state as status_stats %}
+
+    data = []
+    parents = set()
+    # NOTE: overlapping logic with mimetype_treemap
+    for mimetype, stats in mimetype_stats.iteritems():
+        stats['sum']
+        if '/' in mimetype:
+            parent, subtype = mimetype.split('/')
+            parents.add(parent)
+        else:
+            parent = None
+        data.append({
+            'id': 'mimetype', 'value': stats['sum'],
+            'name': '%s (%s)' % (mimetype, filesizeformat(stats['sum'])),
+            'parent': parent})
+
+    for parent in parents:
+        data.append({'id': parent, 'name': parent})
+
+    return JsonResponse({'data': data})
+
+
+def treemap(request, mode):
+    if mode == 'collection':
+        json_url = reverse('collection-treemap-json')
+        title = 'Number of objects by collection'
+    elif mode == 'mimetype':
+        json_url = reverse('mimetype-treemap-json')
+        title = 'Number of objects by master content mimetype'
+    elif mode == 'mimetype-size':
+        json_url = reverse('mimetype-size-treemap-json')
+        title = 'Size of content by master mimetype'
+
+    return render(request, 'repo/treemap.html', {
+        'json_url': json_url, 'title': title})

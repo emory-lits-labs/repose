@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'^indexdata/(?P<id>[^/]+)/$', repo_views.stats_index_data, name='index-data'),
     url(r'^$', repo_views.site_index, name='site-index'),
     # todo: figure out how to organize views better
+    url(r'^check-indexing/$', repo_views.check_indexing, name='check-indexing'),
     url(r'^ds-err/$', repo_views.negative_size, name='negative-size'),
     url(r'^ds-err/pids.txt$', repo_views.negative_size, {'mode': 'pid-list'},
         name='negative-size-pidlist'),

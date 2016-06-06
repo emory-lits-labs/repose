@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import JsonResponse, HttpResponse
@@ -38,21 +39,41 @@ def site_index(request):
 
     # get collection hierarchy
     response = solr.query(
-        solr.Q(content_model='info:fedora/emory-control:Collection-1.0') |
-        solr.Q(content_model='info:fedora/emory-control:Collection-1.1'),
-        collection__any=True) \
-       .field_limit(['pid', 'collection']) \
+            solr.Q(content_model='info:fedora/emory-control:Collection-1.0') |
+            solr.Q(content_model='info:fedora/emory-control:Collection-1.1')) \
+       .field_limit(['pid', 'collection', 'label']) \
        .sort_by('pid') \
        .cursor(rows=100)
 
-    collections = {}
+    # gather collection labels & parents
+    parents = {}
+    labels = {}
     for doc in response:
-        # print doc
-        collections[doc['pid']] = doc['collection'][0]
+        labels[doc['pid']] = doc['label']
+        if 'collection' in doc:
+            parents[doc['pid']] = doc['collection'][0]
 
-    # TODO: combine collection hierarchy with collection facet data
-    # maybe use to build something to use with django regroup?
-    # https://docs.djangoproject.com/en/1.9/ref/templates/builtins/#regroup
+    # preliminary work to combine collection hierarchy & labels with facet data
+    # django regroup doesn't work for this; construct a dict (ordereddict maybe?)
+    # with hierarchy instead
+    collections = {}
+    for value, count in facets['collection']:
+        pid = value.replace('info:fedora/', '')
+        parent_collection = parents.get(pid, None)
+        collection_info = {
+            'pid': value,
+            'label': labels[pid],
+            'count': count,
+            'parent': parent_collection
+        }
+        if parent_collection is not None:
+            if parent_collection not in collections:
+                collections[parent_collection] = {'collections': []}
+            collections[parent_collection]['collections'].append(collection_info)
+        else:
+            if parent_collection not in collections:
+                collections[pid] = {'collections': []}
+            collections[pid].update(collection_info)
 
     # get stats on various sizes
     stats_query = solr.query().stats(['object_size', 'xml_size', 'binary_size',
@@ -73,8 +94,56 @@ def site_index(request):
         'total': result.result.numFound,
         'facets': facets,
         'fedora': settings.FEDORA_ROOT,
-        'stats': stats_query.stats.stats_fields
+        'stats': stats_query.stats.stats_fields,
+        'collections': collections
         })
+
+
+def check_indexing(request):
+    # compare solr index counts to risearch counts as a sanity-check
+    # to identify content that is not indexed
+
+    solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
+    facet_query = solr.query().facet_by(fields=[
+        "content_model"]).paginate(rows=0)
+
+    result = facet_query.execute()
+    total = {'solr': result.result.numFound}
+    facets = result.facet_counts.facet_fields
+
+    repo = Repository()
+    itql_cmodel_count = '''select $cmodel
+count(select $item from <#ri>
+where $item <info:fedora/fedora-system:def/model#hasModel> $cmodel)
+from <#ri>
+where $item <info:fedora/fedora-system:def/model#hasModel> $cmodel
+having $k0 <http://mulgara.org/mulgara#occursMoreThan> '0.0'^^<http://www.w3.org/2001/XMLSchema#double> ;'''
+
+    stmts = repo.risearch.find_statements(itql_cmodel_count,
+                                          language='itql', type='tuples')
+
+    cmodel_counts = OrderedDict()
+    for cmodel, count in facets['content_model']:
+        cmodel_counts[cmodel] = {'solr': count}
+
+    for info in stmts:
+        cmodel = info['cmodel']
+        count = info['k0']
+        if cmodel not in cmodel_counts:
+            cmodel_counts[cmodel] = {'solr': 0}
+        cmodel_counts[cmodel].update({
+            'risearch': count,
+            'diff': cmodel_counts[cmodel]['solr'] - int(count)
+        })
+
+    total['risearch'] = repo.risearch.count_statements(
+        '* <fedora-model:hasModel> <info:fedora/fedora-system:FedoraObject-3.0>')
+    total['diff'] = total['solr'] - total['risearch']
+
+    return render(request, 'repo/check_indexing.html', context={
+        'cmodel_counts': cmodel_counts,
+        'total': total
+    })
 
 
 def negative_size(request, mode='display'):
@@ -190,7 +259,10 @@ def mimetype_treemap_json(request):
     data = []
     parents = set()
     for mimetype, count in facets['mimetype']:
-        parent, subtype = mimetype.split('/')
+        if mimetype and '/' in mimetype:
+            parent, subtype = mimetype.split('/', 1)
+        else:
+            parent = None
         parents.add(parent)
         data.append({'id': 'mimetype', 'value': count, 'name': mimetype,
                      'parent': parent})
@@ -214,8 +286,8 @@ def mimetype_size_treemap_json(request):
     # NOTE: overlapping logic with mimetype_treemap
     for mimetype, stats in mimetype_stats.iteritems():
         stats['sum']
-        if '/' in mimetype:
-            parent, subtype = mimetype.split('/')
+        if mimetype and '/' in mimetype:
+            parent, subtype = mimetype.split('/', 1)
             parents.add(parent)
         else:
             parent = None

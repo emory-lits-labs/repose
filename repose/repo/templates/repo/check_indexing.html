@@ -1,0 +1,28 @@
+{% extends "site_base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container">
+<h2>Check indexing</h2>
+
+<p>Compare indexed numbers from Solr and Fedora's RIsearch to identify
+content that is missing from the Solr index.</p>
+
+<p>Total objects: {{ total.solr|intcomma }} in Solr, {{ total.risearch|intcomma }} in risearch,
+    difference: {{ total.diff|intcomma }}.</p>
+
+
+<p>Counts by content model</p>
+<table class="table table-striped">
+<tr><th>content model</th><th>solr count</th><th>risearch count</th><th>variance</th></tr>
+{% for cmodel, info in cmodel_counts.iteritems %}
+<tr>
+    <th>{{ cmodel }}</th>
+    <td>{{ info.solr|intcomma }}</td>
+    <td>{{ info.risearch|intcomma }}</td>
+    <td>{{ info.diff|intcomma }}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

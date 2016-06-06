@@ -5,7 +5,8 @@
 <div class="container">
 <h2>repository contents</h2>
 
-<p><b>{{ total|intcomma }}</b> objects indexed from {{ fedora }}</p>
+<p><b>{{ total|intcomma }}</b> objects indexed from {{ fedora }}
+  [<a href="{% url 'check-indexing' %}">check indexing</a>]</p>
 <p><b>{{ stats.binary_count.sum|floatformat:"0"|intcomma }}</b> binary datastream versions</p>
 {# not sure why solr stats is returning a float with .0, but convert to display as int #}
 <p><b>{{ stats.object_size.sum|filesizeformat }}</b> total storage</p>

@@ -30,6 +30,7 @@
 </thead>
 <tbody>
 {% for size, data in stats.iteritems %}
+    {% if size != 'binary_count' %}
     <tr>
         <th>{{ size|cut:"_size" }}</th>
         <td data-order="{{ data.max }}">{{ data.max|filesizeformat }}</td>
@@ -37,6 +38,7 @@
         <td data-order="{{ data.mean }}">{{ data.mean|filesizeformat }}</td>
         <td data-order="{{ data.sum }}">{{ data.sum|filesizeformat }}</td>
     </tr>
+    {% endif %}
 {% endfor %}
 </tbody>
 </table>

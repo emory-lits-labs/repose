@@ -256,7 +256,10 @@ Solr Schema for projects using eulfedora and indexdata.
    -->
 
 
+   <field name="id" type="string" indexed="true" stored="true" required="true" />
    <field name="pid" type="string" indexed="true" stored="true" required="true" />
+   <field name="dsid" type="string" indexed="true" stored="true"/>
+   <field name="type" type="text" indexed="true" stored="true" required="true"/>
 
    <!-- standard fedora fields that should apply to all objects -->
    <field name="content_model" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -273,7 +276,7 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="last_modified_s" type="string" indexed="true" stored="false" />
 
    <!-- Dublin Core fields -->
-   <!-- TODO: may not all of need these -->
+   <!-- TODO: probably don't need these for repose...
    <field name="title" type="text" indexed="true" stored="true"/>
    <field name="contributor" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="coverage" type="text" indexed="true" stored="true" multiValued="true"/>
@@ -289,6 +292,7 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="source" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="subject" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="type" type="text" indexed="true" stored="true" multiValued="true"/>
+   -->
 
    <!-- Fedora Relations -->
    <field name="isPartOf" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -318,17 +322,18 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="text" type="text" indexed="true" stored="false" multiValued="true"/>
 
    <!-- non-tokenized versions of terms to for sorting and/or facets -->
-   <!-- TODO: may not need -->
+   <!-- TODO: probably don't need
    <field name="title_exact" type="string" indexed="true" stored="false"/>
-   <field name="subject_facet" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="subject_facet" type="string" indexed="true" stored="true" multiValued="true"/>-->
    <!-- object sizes and primary mimetype -->
-   <field name="object_size" type="slong" indexed="true" stored="true"/>
+   <field name="size" type="slong" indexed="true" stored="true"/>
    <field name="binary_size" type="slong" indexed="true" stored="true"/>
    <field name="xml_size" type="slong" indexed="true" stored="true"/>
    <field name="master_size" type="slong" indexed="true" stored="true"/>
    <field name="access_size" type="slong" indexed="true" stored="true"/>
    <field name="mimetype" type="string" indexed="true" stored="true"/>
    <field name="binary_count" type="sint" indexed="true" stored="true"/>
+   <field name="control_group" type="string" indexed="true" stored="true"/>
 
    <!-- Here, default is used to create a "timestamp" field indicating
         When each document was indexed.
@@ -363,7 +368,7 @@ Solr Schema for projects using eulfedora and indexdata.
  <!-- Field to use to determine and enforce document uniqueness.
       Unless this field is marked with required="false", it will be a required field
    -->
- <uniqueKey>pid</uniqueKey>
+ <uniqueKey>id</uniqueKey>
 
  <!-- field for the QueryParser to use when an explicit fieldname is absent -->
  <defaultSearchField>text</defaultSearchField>
@@ -375,9 +380,9 @@ Solr Schema for projects using eulfedora and indexdata.
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
 
-   <copyField source="title" dest="title_exact"/>
+<!--   <copyField source="title" dest="title_exact"/> -->
    <!-- copy text fields into string fields for faceting -->
-   <copyField source="subject" dest="subject_facet"/>
+<!--   <copyField source="subject" dest="subject_facet"/> -->
 
    <!-- fields that should be included in the default search -->
    <!--    top-level object properties: label, pid, owner -->
@@ -387,7 +392,7 @@ Solr Schema for projects using eulfedora and indexdata.
    <!-- copy datetime fields to string variants for wildcard searching -->
    <copyField source="created" dest="created_s"/>
    <copyField source="last_modified" dest="last_modified_s"/>
-   <!--   all DC fields -->
+   <!--  all DC fields
    <copyField source="title" dest="text"/>
    <copyField source="contributor" dest="text"/>
    <copyField source="creator" dest="text"/>
@@ -402,8 +407,7 @@ Solr Schema for projects using eulfedora and indexdata.
    <copyField source="rights" dest="text"/>
    <copyField source="source" dest="text"/>
    <copyField source="subject" dest="text"/>
-   <copyField source="type" dest="text"/>
-
+   <copyField source="type" dest="text"/>  -->
 
  <!-- Similarity is the scoring routine for each document vs. a query.
       A custom similarity may be specified here, but the default is fine

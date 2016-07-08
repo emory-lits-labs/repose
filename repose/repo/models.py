@@ -13,6 +13,7 @@ class GenericObject(DigitalObject):
 
     def index_data(self):
         data = OrderedDict(super(GenericObject, self).index_data())
+        data.update({'id': self.pid, 'type': 'object'})
         binary_size = 0
         xml_size = 0
         # preliminary object size, based on size of the foxml
@@ -26,9 +27,29 @@ class GenericObject(DigitalObject):
         # number of binary datastream versions on this object
         binary_count = 0
 
+        # current eulindexer can handle a list of dictionaries without
+        # any additional changes; so send index data for the object
+        # AND minimal info for each datastream version
+        indexdata = []
+
         for ds in self.ds_list:
             dsobj = self.getDatastreamObject(ds)
             for version in dsobj.history().versions:
+                # index data for individual datastream versions
+                ds_idx = {
+                    'id': '%s/%s/%s' % (self.pid, ds, version.created.isoformat()),
+                    'type': 'dsversion',
+                    'pid': self.pid,
+                    'dsid': ds,
+                    'label': version.label,
+                    'created': version.created.isoformat(),
+                    'size': version.size,
+                    'mimetype': version.mimetype,
+                    'control_group': version.control_group
+                }
+
+                indexdata.append(ds_idx)
+
                 # FIXME: should external datastreams be included here?
                 if dsobj.mimetype in ['text/xml', 'application/xml',
                                       'application/rdf+xml']:
@@ -45,13 +66,17 @@ class GenericObject(DigitalObject):
 
         data.update({
             # estimated size for entire object
-            'object_size': object_size,
+            'size': object_size,
             'binary_size': binary_size,
             'binary_count': binary_count,
             'xml_size': xml_size,
         })
         data.update(self.master_access_info())
-        return data
+
+        # TODO: could we determine & index primary content model, to allow
+        # facet stats on a non-multivalued field?
+        indexdata.insert(0, data)
+        return indexdata
 
     def index_data_descriptive(self):
         # do we need any descriptive data indexed?
@@ -62,6 +87,7 @@ class GenericObject(DigitalObject):
         # existing data rels is useful; includes content models
         # and collection membership
         data = OrderedDict(super(GenericObject, self).index_data_relations())
+
         # handle any non-fedora rels we care about
         # translate custom etd rels into something more consistent
         for pred, obj in self.rels_ext.content.predicate_objects(self.uriref):
@@ -90,6 +116,11 @@ class GenericObject(DigitalObject):
         'image': 'info:fedora/emory-control:Image-1.0',
         'volume': 'info:fedora/emory-control:ScannedVolume-1.0',
         'oe_publication': 'info:fedora/emory-control:PublishedArticle-1.0',
+
+        # TODO: handle smallpox content models
+        # may be able to use 'MASTER' for master datastream for all of them
+
+        # other content models that are not handled?
     }
     # todo: include old rushdie data
 
@@ -135,7 +166,7 @@ class GenericObject(DigitalObject):
         collections = []
         # collections & parents should exist in production,
         # but may not in dev/qa, so check that they exist before chaining
-        if self.collection:
+        if self.collection is not None:
             if self.collection.exists:
                 collections.append(self.collection.uri)
                 # collections can nest, and we want the all

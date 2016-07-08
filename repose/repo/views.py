@@ -41,8 +41,9 @@ def site_index(request):
     response = solr.query(
             solr.Q(content_model='info:fedora/emory-control:Collection-1.0') |
             solr.Q(content_model='info:fedora/emory-control:Collection-1.1')) \
-       .field_limit(['pid', 'collection', 'label']) \
-       .sort_by('pid') \
+       .filter(type='object') \
+       .field_limit(['pid', 'collection', 'label', 'id']) \
+       .sort_by('id') \
        .cursor(rows=100)
 
     # gather collection labels & parents
@@ -76,11 +77,20 @@ def site_index(request):
             collections[pid].update(collection_info)
 
     # get stats on various sizes
-    stats_query = solr.query().stats(['object_size', 'xml_size', 'binary_size',
-                                      'master_size', 'access_size',
-                                      'binary_count'],
-                                     facet=['mimetype', 'state']) \
-                              .paginate(rows=0).execute()
+    stats_query = solr.query() \
+                      .filter(type='object') \
+                      .stats(['size', 'xml_size', 'binary_size',
+                              'master_size', 'access_size',
+                              'binary_count'],
+                             facet=['mimetype', 'state']) \
+                      .paginate(rows=0).execute()
+
+    ds_stats_query = solr.query() \
+                        .filter(type='dsversion') \
+                        .stats('size', facet=['mimetype', 'control_group']) \
+                        .paginate(rows=0).execute()
+
+    print ds_stats_query.stats.stats_fields
 
     # stats + facet pivots = requires solr 5?
     # stats_query = solr.query().stats(['{!tag=piv1 min=true max=true sum=true}object_size']) \
@@ -95,6 +105,7 @@ def site_index(request):
         'facets': facets,
         'fedora': settings.FEDORA_ROOT,
         'stats': stats_query.stats.stats_fields,
+        'ds_stats': ds_stats_query.stats.stats_fields,
         'collections': collections
         })
 
@@ -104,8 +115,8 @@ def check_indexing(request):
     # to identify content that is not indexed
 
     solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
-    facet_query = solr.query().facet_by(fields=[
-        "content_model"]).paginate(rows=0)
+    facet_query = solr.query().filter(type='object')\
+                      .facet_by(fields=["content_model"]).paginate(rows=0)
 
     result = facet_query.execute()
     total = {'solr': result.result.numFound}
@@ -177,11 +188,12 @@ def negative_size(request, mode='display'):
 def size_range_json(request):
     solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
     # use stats query to determine max size
-    stats_query = solr.query().stats('master_size') \
-                              .paginate(rows=0).execute()
+    stats_query = solr.query().filter(type='object') \
+                      .stats('master_size') \
+                      .paginate(rows=0).execute()
     max_binary_size = int(stats_query.stats.stats_fields['master_size']['max'])
 
-    size_query = response = solr.query() \
+    size_query = response = solr.query().filter(type='object') \
                    .facet_range(fields='master_size', start=0,
                                 gap=1024*1024*1024,  # gb
                                 end=max_binary_size) \
@@ -211,7 +223,7 @@ def size_range(request):
 def collection_treemap_json(request):
     # collection treemap, number of objects
     solr = scorched.SolrInterface(settings.SOLR_SERVER_URL)
-    facet_query = solr.query().facet_by(fields=[
+    facet_query = solr.query().filter(type='object').facet_by(fields=[
         "collection"]).paginate(rows=0)
 
     result = facet_query.execute()
@@ -222,7 +234,7 @@ def collection_treemap_json(request):
         solr.Q(content_model='info:fedora/emory-control:Collection-1.0') |
         solr.Q(content_model='info:fedora/emory-control:Collection-1.1')) \
        .field_limit(['pid', 'collection', 'label']) \
-       .sort_by('pid') \
+       .sort_by('id') \
        .cursor(rows=500)
 
     parents = {}

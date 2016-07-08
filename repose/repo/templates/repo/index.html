@@ -9,7 +9,7 @@
   [<a href="{% url 'check-indexing' %}">check indexing</a>]</p>
 <p><b>{{ stats.binary_count.sum|floatformat:"0"|intcomma }}</b> binary datastream versions</p>
 {# not sure why solr stats is returning a float with .0, but convert to display as int #}
-<p><b>{{ stats.object_size.sum|filesizeformat }}</b> total storage</p>
+<p><b>{{ stats.size.sum|filesizeformat }}</b> total storage</p>
 <p>Charts:
     <a href="{% url 'size-range' %}">size range by type</a> |
     <a href="{% url 'collection-treemap' %}"># of objects by collection</a> |
@@ -51,10 +51,10 @@
 
 <div class="col-md-6">
 
-<h3>Totals by content model</h3>
+<h3>Total objects by content model</h3>
 <table class="table table-striped sortable">
 <thead>
-    <tr><th>total</th><th>content model</th></tr>
+    <tr><th># objects</th><th>content model</th></tr>
 </thead>
 <tbody>
 {% for val, count in facets.content_model %}
@@ -69,11 +69,11 @@
 {# stats facets includes value and count; easier to display just via stats #}
 {# than to try to combine facets results with stats query #}
 {% with stats.binary_size.facets.mimetype as mimetype_stats %}
-<h3>Totals by mimetype</h3>  {# primary content mimetype #}
+<h3>Total objects by primary mimetype</h3>  {# primary content mimetype #}
 <table class="table table-striped sortable">
 <thead>
     <tr>
-        <th>total</th>
+        <th># objects</th>
         <th>mimetype</th>
         <th>binary size</th>
     </tr>
@@ -88,13 +88,15 @@
 </table>
 {% endwith %}
 
+
+
 </div>
 <div class="col-md-6">
 
-<table><h3>Totals by collection</h3>
+<table><h3>Total objects by collection</h3>
 <table class="table table-striped sortable">
 <thead>
-    <tr><th>total</th><th>collection</th></tr>
+    <tr><th># objects</th><th>collection</th></tr>
 </thead>
 <tbody>
 {% for val, count in facets.collection %}
@@ -107,10 +109,10 @@
 </table>
 
 {% with stats.object_size.facets.state as status_stats %}
-<h3>Totals by status</h3>
+<h3>Total objects by status</h3>
 <table class="table table-striped sortable">
 <thead>
-<tr><th>total</th><th>status</th><th>object size</th></tr>
+<tr><th># objects</th><th>status</th><th>object size</th></tr>
 </thead>
 <tbody>
 {# convert fedora codes to labels for readability #}
@@ -130,6 +132,52 @@
 
 </div>
 
+{# datastream stats #}
+
+{% with ds_stats.size.facets.mimetype as mimetype_stats %}
+<h3>Total datastream versions by mimetype</h3>
+<table class="table table-striped sortable">
+<thead>
+    <tr>
+        <th># datastreams</th>
+        <th>mimetype</th>
+        <th>size</th>
+    </tr>
+</thead>
+{% for mimetype, stats in mimetype_stats.iteritems %}
+    <tr>
+        <td data-order="{{ stats.count }}">{{ stats.count|intcomma }}</td>
+        <td>{{ mimetype }}</td>
+        <td data-order="{{ stats.sum }}">{{ stats.sum|filesizeformat }}</td>
+    </tr>
+{% endfor %}
+</table>
+{% endwith %}
+
+{% with ds_stats.size.facets.control_group as control_group_stats %}
+<h3>Total datastream versions by control group</h3>
+<table class="table table-striped sortable">
+<thead>
+    <tr>
+        <th># datastreams</th>
+        <th>control group</th>
+        <th>size</th>
+    </tr>
+</thead>
+{% for control_group, stats in control_group_stats.iteritems %}
+    <tr>
+        <td data-order="{{ stats.count }}">{{ stats.count|intcomma }}</td>
+        <td>{{ control_group }}
+            {% if control_group == 'M' %}(managed)
+            {% elif control_group == 'X' %}(inline XML)
+            {% elif control_group == 'E' %}(external)
+            {% endif %}
+        </td>
+        <td data-order="{{ stats.sum }}">{{ stats.sum|filesizeformat }}</td>
+    </tr>
+{% endfor %}
+</table>
+{% endwith %}
 
 </div>
 </div>
